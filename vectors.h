@@ -20,7 +20,7 @@ class vectors {
     uint8_t size;
     void calcInsertions(unordered_set<string>& hash, string vec);
 public:
-    vectors(string vec): s_vector(vec), size(vec.size()){}
+    explicit vectors(const string &vec): s_vector(vec), size(vec.size()){}
     int ballSize();
     string get_vector()const {
         return this->s_vector;
