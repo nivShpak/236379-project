@@ -13,7 +13,7 @@ int vectors::ballSize() {
             string tmp_s = this->s_vector;
             tmp_s.erase(j,1);
             tmp_s.erase(i,1);
-            if(hash1.find(tmp_s)== hash1.end()) {
+            if(hash1.find(tmp_s) == hash1.end()) {
                 hash1.insert(tmp_s);
                 this->calcInsertions(hash2, tmp_s);
             }

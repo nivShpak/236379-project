@@ -73,20 +73,19 @@ int main() {
     auto middle = steady_clock::now();
     unsigned int i, j=0;
     unordered_map<string, int> vectors_sizes;
-    int total_vectors = 1<<19;
+    int total_vectors = 1<<22;
+    uint64_t total_time_calculating_balls = 0;
+
+    #pragma omp parallel for
     for (i=0 ; i < total_vectors; ++i) {
-        string s = bitset<19>(i).to_string();
+        string s = bitset<22>(i).to_string();
 
         if (s[0] == '1') {
             // it's enough to check ony vectors starting with '0'
             break;
         }
-        if (!hasRunLongerThan(s, 3)) {
+        if (hasRunLongerThan(s, 2)) {
             continue;
-        }
-        if (duration_cast<seconds>(steady_clock::now() - middle).count() > 3) {
-            cout << duration_cast<seconds>(steady_clock::now() - start).count() << ": " << i << " of " << total_vectors << endl;
-            middle = steady_clock::now();
         }
 
         // check if we calculated the not or the reverse
@@ -103,6 +102,11 @@ int main() {
         }
 
         j++;
+        if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
+            cout << duration_cast<seconds>(steady_clock::now() - start).count() << ": " << i << " of " << total_vectors << endl;
+            middle = steady_clock::now();
+        }
+        auto ballStart = steady_clock::now();
         vectors v(s);
         int tmp = v.ballSize();
 
@@ -113,9 +117,11 @@ int main() {
             cout << duration_cast<seconds>(steady_clock::now() - start).count() << ": " << v.get_vector() << "    " << max << "     " << endl;
             middle = steady_clock::now();
         }
+        total_time_calculating_balls += duration_cast<nanoseconds>(steady_clock::now() - ballStart).count();
     }
     auto end = steady_clock::now();
-    cout << "2-indel check of " << j << " vectors out of " << i*2 << " took: " << duration_cast<seconds>(end - start).count() << "s" << endl;
+    cout << "2-indel check of " << j << " vectors out of " << i*2 << " took: " << duration_cast<seconds>(end - start).count() << "s"
+         << " total time calculating balls: " << (total_time_calculating_balls / 1000000000) << "s" << endl;
 
     //printHistogram(max, vectors_sizes);
 
