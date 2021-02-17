@@ -85,7 +85,8 @@ void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes,
     }
     for (auto iter = vectors_sizes->begin(); iter != vectors_sizes->end(); ++iter) {
         auto cur = iter->second;
-        hist[cur]++;
+        // we checked only for vectors that started with '0', so need to duplicate the numbers
+        hist[cur]+=2;
     }
 
     for (i = 0; i <= max; i++) {
