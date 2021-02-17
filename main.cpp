@@ -1,23 +1,25 @@
 #include <iostream>
+#include <fstream>
 #include <bitset>
-#include "vectors.h"
 #include <chrono>
 #include <unordered_map>
 #include <pthread.h>
+#include <cstdlib>
+
+#include "vectors.h"
+#include "settings.h"
 
 using namespace std;
 using namespace std::chrono;
-
-#define VECTORS_LENGTH 23
-#define NUM_THREADS    32
 
 struct max_vector {
     char s_vector[VECTORS_LENGTH + 1];
     int ball_size;
     int mask;
+    unordered_map<string, int> *vectors_sizes;
 };
 
-int longestRun(string s){
+int longestRun(string s) {
     int max_run = 0;
     int current_run=0;
     int i = 0;
@@ -56,36 +58,58 @@ bool hasRunLongerThan(string s, int x) {
     return false;
 }
 
-void printHistogram(int max, unordered_map<string, int> vectors_sizes) {
+void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes, int isPrint, int isExport) {
     // create the histogram - it's not a full one if we check only the at most 2-length runs
+    if (!isPrint && !isExport)
+        return;
+
     int i = 0;
     int hist[max + 1];
+    ofstream histFile;
+    if (isExport) {
+        histFile.open(HISTOGRAM_FILE_NAME);
+        if (TWO_MAX_RUN_LENGTH)
+            histFile << "ball_size,num_vectors(2_max_run_length_only)" << endl;
+        else
+            histFile << "ball_size,num_vectors" << endl;
+    }
+    if (isPrint) {
+        if (TWO_MAX_RUN_LENGTH)
+            cout << "ball_size,num_vectors(2_max_run_length_only)" << endl;
+        else
+            cout << "ball_size,num_vectors" << endl;
+    }
+
     for (i = 0; i <= max; i++) {
         hist[i] = 0;
     }
-    for(auto iter = vectors_sizes.begin(); iter != vectors_sizes.end(); ++iter) {
+    for (auto iter = vectors_sizes->begin(); iter != vectors_sizes->end(); ++iter) {
         auto cur = iter->second;
         hist[cur]++;
-        //cout << "first is: " << iter->first << " second is: " << iter->second << endl;
-    }
-    cout << "sizes histogram:" << endl;
-    for (i = 0; i <= max; i++) {
-        if (hist[i] > 0)
-            cout << i << "    " << hist[i] << endl;
     }
 
+    for (i = 0; i <= max; i++) {
+        if (hist[i] > 0) {
+            if (isPrint)
+                cout << i << "," << hist[i] << endl;
+            if (isExport)
+                histFile << i << "," << hist[i] << endl;
+        }
+    }
+    if (isExport) {
+        histFile.close();
+        cout << "histogram file created at: " << realpath(HISTOGRAM_FILE_NAME, nullptr);
+    }
 }
 
 void *splitCheck(void *max_vector_p) {
     auto start = steady_clock::now();
     auto middle = steady_clock::now();
-    unordered_map<string, int> vectors_sizes;
     int total_vectors = 1<<VECTORS_LENGTH;
-    uint64_t total_time_calculating_balls = 0;
     int vectors_calculated = 0;
     int tmp_size = 0;
     struct max_vector *max_vector = ((struct max_vector *)max_vector_p);
-
+    unordered_map<string, int> *vectors_sizes = max_vector->vectors_sizes;
     for (int i = max_vector->mask; i < total_vectors; i += NUM_THREADS) {
         string s = bitset<VECTORS_LENGTH>(i).to_string();
 
@@ -93,44 +117,44 @@ void *splitCheck(void *max_vector_p) {
             // it's enough to check ony vectors starting with '0'
             break;
         }
-        if (hasRunLongerThan(s, 2)) {
+        if (TWO_MAX_RUN_LENGTH && hasRunLongerThan(s, 2)) {
             continue;
         }
 
-        // check if we calculated the not or the reverse
+        // check if we calculated the reverse
         string s_reverse = s;
-        string s_not = s;
-        for (int index = 0; index < s_not.size(); index++) {
-            s_not[index] == '1' ? s_not[index] = '0' : s_not[index] = '1';
-        }
         reverse(s_reverse.begin(), s_reverse.end());
-        // the vector with the most vectors inside it's 2-indel ball, it's longest gun will be of 2 at most
-        if ((vectors_sizes.find(s_reverse) != vectors_sizes.end()) ||
-            (vectors_sizes.find(s_not) != vectors_sizes.end())) {
+        // avoiding the reverse will complicate the calculation of the histogram, so we will do double work in that case
+        if ((!(EXPORT_HISTOGRAM || PRINT_HISTOGRAM)) &&
+            (vectors_sizes->find(s_reverse) != vectors_sizes->end())) {
             continue;
         }
 
         vectors_calculated++;
         if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
-            //cout << "mask " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
+            if (VERBOSITY >= 2)
+                cout << "mask " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
             middle = steady_clock::now();
         }
-        auto ballStart = steady_clock::now();
         vectors v(s);
         tmp_size = v.ballSize();
 
-        vectors_sizes.insert({s, tmp_size});
+        vectors_sizes->insert({s, tmp_size});
 
         if (tmp_size > max_vector->ball_size) {
             max_vector->ball_size = tmp_size;
             strncpy(max_vector->s_vector, v.get_vector().c_str(), VECTORS_LENGTH + 1);
-            // cout << max_vector.mask << ": " << max_vector.s_vector << "    " << tmp_size << endl;
+            if (VERBOSITY >= 2)
+                cout << max_vector->mask << ": " << max_vector->s_vector << "    " << tmp_size << endl;
             middle = steady_clock::now();
         }
-        total_time_calculating_balls += duration_cast<nanoseconds>(steady_clock::now() - ballStart).count();
     }
-    cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in " << total_time_calculating_balls / 1000000000 << "s"
-         << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
+
+    if (VERBOSITY >= 1) {
+        cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
+             << duration_cast<seconds>(steady_clock::now() - start).count() << "s"
+             << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
+    }
 
     return nullptr;
 }
@@ -142,17 +166,19 @@ int main() {
     };
     strcpy(max_vector.s_vector, "X");
     // initiate the arguments for the threads
-    struct max_vector tmp_vectors[NUM_THREADS];
+    struct max_vector thread_data[NUM_THREADS];
     for (int i = 0; i < NUM_THREADS; i++) {
-        strcpy(tmp_vectors[i].s_vector, "X");
-        tmp_vectors[i].ball_size = 0;
-        tmp_vectors[i].mask = i;
+        auto *vectors_sizes = new unordered_map<string, int>;
+        strcpy(thread_data[i].s_vector, "X");
+        thread_data[i].ball_size = 0;
+        thread_data[i].mask = i;
+        thread_data[i].vectors_sizes = vectors_sizes;
     }
     pthread_t ptid[NUM_THREADS];
 
     // run the balls calculation in parallel
     for(int i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&ptid[i], nullptr, &splitCheck, (void*)&tmp_vectors[i]);
+        pthread_create(&ptid[i], nullptr, &splitCheck, (void*)&thread_data[i]);
     }
     for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(ptid[i], nullptr);
@@ -160,16 +186,21 @@ int main() {
 
     // get the max vector of all the calculations
     for(int i = 0; i < NUM_THREADS; i++) {
-        if (tmp_vectors[i].ball_size > max_vector.ball_size) {
-            max_vector.ball_size = tmp_vectors[i].ball_size;
-            strncpy(max_vector.s_vector, tmp_vectors[i].s_vector, VECTORS_LENGTH + 1);
+        if (thread_data[i].ball_size > max_vector.ball_size) {
+            max_vector.ball_size = thread_data[i].ball_size;
+            strncpy(max_vector.s_vector, thread_data[i].s_vector, VECTORS_LENGTH + 1);
         }
     }
 
-    cout << endl << "for n=" << VECTORS_LENGTH << " max vector is: " << max_vector.s_vector << " with an indel-2 ball of size: " << max_vector.ball_size << endl;
-    //printHistogram(max, vectors_sizes);
+    cout << endl << "for n=" << VECTORS_LENGTH << " max vector is: " << max_vector.s_vector << " with an indel-2 ball of size: " << max_vector.ball_size << endl << endl;
+
+    if (EXPORT_HISTOGRAM || PRINT_HISTOGRAM) {
+        unordered_map<string, int> all_vectors_sizes;
+        for (int i=0; i<NUM_THREADS; i++) {
+            all_vectors_sizes.merge(*thread_data[i].vectors_sizes);
+        }
+        printAndExportHistogram(max_vector.ball_size, &all_vectors_sizes, PRINT_HISTOGRAM, EXPORT_HISTOGRAM);
+    }
 
     return 0;
 }
-
-
