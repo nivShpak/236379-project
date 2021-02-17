@@ -8,7 +8,8 @@
 using namespace std;
 using namespace std::chrono;
 
-#define VECTORS_LENGTH 25
+#define VECTORS_LENGTH 26
+#define NUM_THREADS    10
 
 struct max_vector {
     string s_vector;
@@ -83,11 +84,9 @@ void *splitCheck(void *max_vector_p) {
     uint64_t total_time_calculating_balls = 0;
     int vectors_calculated = 0;
     int tmp_size = 0;
-    auto max_vector = *((struct max_vector *)max_vector_p);;
-    max_vector.ball_size = -1;
-    max_vector.s_vector = "0";
+    auto max_vector = ((struct max_vector *)max_vector_p);;
 
-    for (int i=max_vector.mask ; i < total_vectors; i+=8) {
+    for (int i = max_vector->mask; i < total_vectors; i += NUM_THREADS) {
         string s = bitset<VECTORS_LENGTH>(i).to_string();
 
         if (s[0] == '1') {
@@ -113,7 +112,7 @@ void *splitCheck(void *max_vector_p) {
 
         vectors_calculated++;
         if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
-            cout << "mask " << max_vector.mask << ": checked " << i/8 << " (calculated " << vectors_calculated << ") of " << total_vectors/8 << endl;
+            cout << "mask " << max_vector->mask << ": checked " << i/8 << " (calculated " << vectors_calculated << ") of " << total_vectors/8 << endl;
             middle = steady_clock::now();
         }
         auto ballStart = steady_clock::now();
@@ -122,17 +121,16 @@ void *splitCheck(void *max_vector_p) {
 
         vectors_sizes.insert({s, tmp_size});
 
-        if (tmp_size > max_vector.ball_size) {
-            max_vector.ball_size = tmp_size;
-            max_vector.s_vector = v.get_vector();
+        if (tmp_size > max_vector->ball_size) {
+            max_vector->ball_size = tmp_size;
+            max_vector->s_vector = v.get_vector();
             // cout << max_vector.mask << ": " << max_vector.s_vector << "    " << tmp_size << endl;
             middle = steady_clock::now();
         }
         total_time_calculating_balls += duration_cast<nanoseconds>(steady_clock::now() - ballStart).count();
     }
-    cout << "mask " << max_vector.mask << " calculated " << vectors_calculated << " vectors in " << total_time_calculating_balls / 1000000000 << "s" << endl;
+    cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in " << total_time_calculating_balls / 1000000000 << "s" << endl;
 
-    memmove(max_vector_p, &max_vector, sizeof(max_vector));
     return nullptr;
 }
 
@@ -142,24 +140,24 @@ int main() {
             .ball_size = -1,
             .mask = -1
     };
-    auto *tmp_vectors = (struct max_vector *)malloc(sizeof(struct max_vector)*8);
+    struct max_vector tmp_vectors[8]; // = (struct max_vector *)malloc(sizeof(struct max_vector)*8);
     pthread_t ptid[8];
 
-    for(int i = 0; i<8; i++) {
+    for(int i = 0; i < NUM_THREADS; i++) {
         tmp_vectors[i].mask = i;
         pthread_create(&ptid[i], nullptr, &splitCheck, (void*)(tmp_vectors + i));
     }
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(ptid[i], nullptr);
     }
 
-    for(int i = 0; i<8; i++) {
+    for(int i = 0; i < NUM_THREADS; i++) {
         if (tmp_vectors[i].ball_size > max_vector.ball_size)
             max_vector = tmp_vectors[i];
     }
 
-    cout << "for n=" << VECTORS_LENGTH << ": " << max_vector.s_vector << "      " << max_vector.ball_size << endl;
+    cout << "for n=" << VECTORS_LENGTH << " max vector is: " << max_vector.s_vector << " with an indel-2 ball of size: " << max_vector.ball_size << endl;
     //printHistogram(max, vectors_sizes);
 
     return 0;
