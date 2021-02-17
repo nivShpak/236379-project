@@ -8,11 +8,11 @@
 using namespace std;
 using namespace std::chrono;
 
-#define VECTORS_LENGTH 26
-#define NUM_THREADS    10
+#define VECTORS_LENGTH 23
+#define NUM_THREADS    32
 
 struct max_vector {
-    string s_vector;
+    char s_vector[VECTORS_LENGTH + 1];
     int ball_size;
     int mask;
 };
@@ -84,7 +84,7 @@ void *splitCheck(void *max_vector_p) {
     uint64_t total_time_calculating_balls = 0;
     int vectors_calculated = 0;
     int tmp_size = 0;
-    auto max_vector = ((struct max_vector *)max_vector_p);;
+    struct max_vector *max_vector = ((struct max_vector *)max_vector_p);
 
     for (int i = max_vector->mask; i < total_vectors; i += NUM_THREADS) {
         string s = bitset<VECTORS_LENGTH>(i).to_string();
@@ -112,7 +112,7 @@ void *splitCheck(void *max_vector_p) {
 
         vectors_calculated++;
         if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
-            cout << "mask " << max_vector->mask << ": checked " << i/8 << " (calculated " << vectors_calculated << ") of " << total_vectors/8 << endl;
+            //cout << "mask " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
             middle = steady_clock::now();
         }
         auto ballStart = steady_clock::now();
@@ -123,41 +123,50 @@ void *splitCheck(void *max_vector_p) {
 
         if (tmp_size > max_vector->ball_size) {
             max_vector->ball_size = tmp_size;
-            max_vector->s_vector = v.get_vector();
+            strncpy(max_vector->s_vector, v.get_vector().c_str(), VECTORS_LENGTH + 1);
             // cout << max_vector.mask << ": " << max_vector.s_vector << "    " << tmp_size << endl;
             middle = steady_clock::now();
         }
         total_time_calculating_balls += duration_cast<nanoseconds>(steady_clock::now() - ballStart).count();
     }
-    cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in " << total_time_calculating_balls / 1000000000 << "s" << endl;
+    cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in " << total_time_calculating_balls / 1000000000 << "s"
+         << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
 
     return nullptr;
 }
 
 int main() {
     struct max_vector max_vector = {
-            .s_vector = "0",
-            .ball_size = -1,
-            .mask = -1
+            .ball_size = 0,
+            .mask = 0
     };
-    struct max_vector tmp_vectors[8]; // = (struct max_vector *)malloc(sizeof(struct max_vector)*8);
-    pthread_t ptid[8];
-
-    for(int i = 0; i < NUM_THREADS; i++) {
+    strcpy(max_vector.s_vector, "X");
+    // initiate the arguments for the threads
+    struct max_vector tmp_vectors[NUM_THREADS];
+    for (int i = 0; i < NUM_THREADS; i++) {
+        strcpy(tmp_vectors[i].s_vector, "X");
+        tmp_vectors[i].ball_size = 0;
         tmp_vectors[i].mask = i;
-        pthread_create(&ptid[i], nullptr, &splitCheck, (void*)(tmp_vectors + i));
     }
+    pthread_t ptid[NUM_THREADS];
 
+    // run the balls calculation in parallel
+    for(int i = 0; i < NUM_THREADS; i++) {
+        pthread_create(&ptid[i], nullptr, &splitCheck, (void*)&tmp_vectors[i]);
+    }
     for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(ptid[i], nullptr);
     }
 
+    // get the max vector of all the calculations
     for(int i = 0; i < NUM_THREADS; i++) {
-        if (tmp_vectors[i].ball_size > max_vector.ball_size)
-            max_vector = tmp_vectors[i];
+        if (tmp_vectors[i].ball_size > max_vector.ball_size) {
+            max_vector.ball_size = tmp_vectors[i].ball_size;
+            strncpy(max_vector.s_vector, tmp_vectors[i].s_vector, VECTORS_LENGTH + 1);
+        }
     }
 
-    cout << "for n=" << VECTORS_LENGTH << " max vector is: " << max_vector.s_vector << " with an indel-2 ball of size: " << max_vector.ball_size << endl;
+    cout << endl << "for n=" << VECTORS_LENGTH << " max vector is: " << max_vector.s_vector << " with an indel-2 ball of size: " << max_vector.ball_size << endl;
     //printHistogram(max, vectors_sizes);
 
     return 0;
