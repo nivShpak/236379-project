@@ -1,12 +1,20 @@
 #include <iostream>
-#include <string>
 #include <bitset>
 #include "vectors.h"
 #include <chrono>
 #include <unordered_map>
+#include <pthread.h>
 
 using namespace std;
 using namespace std::chrono;
+
+#define VECTORS_LENGTH 25
+
+struct max_vector {
+    string s_vector;
+    int ball_size;
+    int mask;
+};
 
 int longestRun(string s){
     int max_run = 0;
@@ -67,18 +75,20 @@ void printHistogram(int max, unordered_map<string, int> vectors_sizes) {
 
 }
 
-int main() {
-    int max = 0;
+void *splitCheck(void *max_vector_p) {
     auto start = steady_clock::now();
     auto middle = steady_clock::now();
-    unsigned int i, j=0;
     unordered_map<string, int> vectors_sizes;
-    int total_vectors = 1<<22;
+    int total_vectors = 1<<VECTORS_LENGTH;
     uint64_t total_time_calculating_balls = 0;
+    int vectors_calculated = 0;
+    int tmp_size = 0;
+    auto max_vector = *((struct max_vector *)max_vector_p);;
+    max_vector.ball_size = -1;
+    max_vector.s_vector = "0";
 
-    #pragma omp parallel for
-    for (i=0 ; i < total_vectors; ++i) {
-        string s = bitset<22>(i).to_string();
+    for (int i=max_vector.mask ; i < total_vectors; i+=8) {
+        string s = bitset<VECTORS_LENGTH>(i).to_string();
 
         if (s[0] == '1') {
             // it's enough to check ony vectors starting with '0'
@@ -101,28 +111,55 @@ int main() {
             continue;
         }
 
-        j++;
+        vectors_calculated++;
         if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
-            cout << duration_cast<seconds>(steady_clock::now() - start).count() << ": " << i << " of " << total_vectors << endl;
+            cout << "mask " << max_vector.mask << ": checked " << i/8 << " (calculated " << vectors_calculated << ") of " << total_vectors/8 << endl;
             middle = steady_clock::now();
         }
         auto ballStart = steady_clock::now();
         vectors v(s);
-        int tmp = v.ballSize();
+        tmp_size = v.ballSize();
 
-        vectors_sizes.insert({s, tmp});
+        vectors_sizes.insert({s, tmp_size});
 
-        if (tmp > max) {
-            max = tmp;
-            cout << duration_cast<seconds>(steady_clock::now() - start).count() << ": " << v.get_vector() << "    " << max << "     " << endl;
+        if (tmp_size > max_vector.ball_size) {
+            max_vector.ball_size = tmp_size;
+            max_vector.s_vector = v.get_vector();
+            // cout << max_vector.mask << ": " << max_vector.s_vector << "    " << tmp_size << endl;
             middle = steady_clock::now();
         }
         total_time_calculating_balls += duration_cast<nanoseconds>(steady_clock::now() - ballStart).count();
     }
-    auto end = steady_clock::now();
-    cout << "2-indel check of " << j << " vectors out of " << i*2 << " took: " << duration_cast<seconds>(end - start).count() << "s"
-         << " total time calculating balls: " << (total_time_calculating_balls / 1000000000) << "s" << endl;
+    cout << "mask " << max_vector.mask << " calculated " << vectors_calculated << " vectors in " << total_time_calculating_balls / 1000000000 << "s" << endl;
 
+    memmove(max_vector_p, &max_vector, sizeof(max_vector));
+    return nullptr;
+}
+
+int main() {
+    struct max_vector max_vector = {
+            .s_vector = "0",
+            .ball_size = -1,
+            .mask = -1
+    };
+    auto *tmp_vectors = (struct max_vector *)malloc(sizeof(struct max_vector)*8);
+    pthread_t ptid[8];
+
+    for(int i = 0; i<8; i++) {
+        tmp_vectors[i].mask = i;
+        pthread_create(&ptid[i], nullptr, &splitCheck, (void*)(tmp_vectors + i));
+    }
+
+    for (int i = 0; i < 8; i++) {
+        pthread_join(ptid[i], nullptr);
+    }
+
+    for(int i = 0; i<8; i++) {
+        if (tmp_vectors[i].ball_size > max_vector.ball_size)
+            max_vector = tmp_vectors[i];
+    }
+
+    cout << "for n=" << VECTORS_LENGTH << ": " << max_vector.s_vector << "      " << max_vector.ball_size << endl;
     //printHistogram(max, vectors_sizes);
 
     return 0;
