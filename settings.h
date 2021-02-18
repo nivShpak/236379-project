@@ -14,8 +14,8 @@
 #define STR(x) STRINGIFY(x)
 
 // general arguments
-#define VECTORS_LENGTH 26
-#define NUM_THREADS    32
+#define VECTORS_LENGTH 15
+#define NUM_THREADS    1
 #define HISTOGRAM_PATH "./"
 #define HISTOGRAM_FILE_NAME HISTOGRAM_PATH "2-indel_histogram_n=" STR(VECTORS_LENGTH) ".csv"
 
@@ -24,6 +24,6 @@
 #define EXPORT_HISTOGRAM 0
 #define PRINT_HISTOGRAM 1
 #define HISTOGRAM_BUCKET_SIZE 20
-#define VERBOSITY 1
+#define VERBOSITY 2
 
 #endif //UNTITLED2_SETTINGS_H

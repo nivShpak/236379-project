@@ -143,7 +143,7 @@ void *splitCheck(void *max_vector_p) {
             middle = steady_clock::now();
         }
         vectors v(s);
-        tmp_size = v.twoBallSize();
+        tmp_size = v.twoBallSizeFromHash();
         vectors_calculated++;
 
         vectors_sizes->insert({s, tmp_size});
@@ -162,6 +162,17 @@ void *splitCheck(void *max_vector_p) {
          << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
 
     return nullptr;
+}
+
+int main1() {
+    for (int i=0; i< 1<<VECTORS_LENGTH; i++) {
+        string s = bitset<VECTORS_LENGTH>(i).to_string();
+        vectors v(s);
+        v.oneBallSize();
+        if (i%10000 == 0)
+            cout << "done " << i << " of " << (1<<VECTORS_LENGTH) << endl;
+    }
+    return 0;
 }
 
 int main() {
@@ -212,6 +223,5 @@ int main() {
             cout << "    max vector: " << iter->first << " (" << iter->second << ")" << endl;
         }
     }
-
     return 0;
 }

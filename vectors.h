@@ -12,6 +12,8 @@
 #include <bitset>
 #include <string>
 
+#include "settings.h"
+
 using namespace std;
 
 
@@ -19,15 +21,16 @@ class vectors {
     string s_vector;
     uint8_t size;
     void calcTwoInsertions(unordered_set<string>& hash, string vec);
-    void calcOneInsertion(unordered_set<string>& hash, string vec);
 public:
     explicit vectors(const string &vec): s_vector(vec), size(vec.size()){}
     int twoBallSize();
+    int twoBallSizeFromHash();
     int oneBallSize();
     string get_vector()const {
         return this->s_vector;
     }
 };
 
+void showCalculatedVectors();
 
 #endif //UNTITLED2_VECTORS_H
