@@ -64,43 +64,49 @@ void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes,
         return;
 
     int i = 0;
-    int hist[max + 1];
+    int hist[(max / HISTOGRAM_BUCKET_SIZE) + 1];
     ofstream histFile;
+    uint64_t totalBallsSum = 0, totalVectors = 0;
+
     if (isExport) {
         histFile.open(HISTOGRAM_FILE_NAME);
         if (TWO_MAX_RUN_LENGTH)
-            histFile << "ball_size,num_vectors(2_max_run_length_only)" << endl;
+            histFile << "ball_size_bucket,num_vectors(2_max_run_length_only)" << endl;
         else
-            histFile << "ball_size,num_vectors" << endl;
+            histFile << "ball_size_bucket,num_vectors" << endl;
     }
     if (isPrint) {
         if (TWO_MAX_RUN_LENGTH)
-            cout << "ball_size,num_vectors(2_max_run_length_only)" << endl;
+            cout << "ball_size_bucket,num_vectors(2_max_run_length_only)" << endl;
         else
-            cout << "ball_size,num_vectors" << endl;
+            cout << "ball_size_bucket,num_vectors" << endl;
     }
 
-    for (i = 0; i <= max; i++) {
+    for (i = 0; i <= max/HISTOGRAM_BUCKET_SIZE; i++) {
         hist[i] = 0;
     }
     for (auto iter = vectors_sizes->begin(); iter != vectors_sizes->end(); ++iter) {
         auto cur = iter->second;
         // we checked only for vectors that started with '0', so need to duplicate the numbers
-        hist[cur]+=2;
+        hist[cur/HISTOGRAM_BUCKET_SIZE]+=2;
+        totalBallsSum += cur;
+        totalVectors++;
     }
 
-    for (i = 0; i <= max; i++) {
+    for (i = 0; i <= max/HISTOGRAM_BUCKET_SIZE; i++) {
         if (hist[i] > 0) {
             if (isPrint)
-                cout << i << "," << hist[i] << endl;
+                cout << i*HISTOGRAM_BUCKET_SIZE << "," << hist[i] << endl;
             if (isExport)
-                histFile << i << "," << hist[i] << endl;
+                histFile << i*HISTOGRAM_BUCKET_SIZE << "," << hist[i] << endl;
+            // calculate the sum to print the avg ball size
         }
     }
     if (isExport) {
         histFile.close();
-        cout << "histogram file created at: " << realpath(HISTOGRAM_FILE_NAME, nullptr);
+        cout << "histogram file created at: " << realpath(HISTOGRAM_FILE_NAME, nullptr) << endl;
     }
+    cout << "avg ball size is: " << totalBallsSum / totalVectors << " (from " << totalVectors*2 << " vectors)" << endl;
 }
 
 void *splitCheck(void *max_vector_p) {
@@ -131,14 +137,14 @@ void *splitCheck(void *max_vector_p) {
             continue;
         }
 
-        vectors_calculated++;
         if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
-            if (VERBOSITY >= 2)
+            if (VERBOSITY >= 1)
                 cout << "mask " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
             middle = steady_clock::now();
         }
         vectors v(s);
-        tmp_size = v.ballSize();
+        tmp_size = v.twoBallSize();
+        vectors_calculated++;
 
         vectors_sizes->insert({s, tmp_size});
 
@@ -151,11 +157,9 @@ void *splitCheck(void *max_vector_p) {
         }
     }
 
-    if (VERBOSITY >= 1) {
-        cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
-             << duration_cast<seconds>(steady_clock::now() - start).count() << "s"
-             << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
-    }
+    cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
+         << duration_cast<seconds>(steady_clock::now() - start).count() << "s"
+         << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
 
     return nullptr;
 }
@@ -193,14 +197,20 @@ int main() {
         }
     }
 
-    cout << endl << "for n=" << VECTORS_LENGTH << " max vector is: " << max_vector.s_vector << " with an indel-2 ball of size: " << max_vector.ball_size << endl << endl;
-
+    unordered_map<string, int> all_vectors_sizes;
+    for (int i=0; i<NUM_THREADS; i++) {
+        all_vectors_sizes.merge(*thread_data[i].vectors_sizes);
+    }
     if (EXPORT_HISTOGRAM || PRINT_HISTOGRAM) {
-        unordered_map<string, int> all_vectors_sizes;
-        for (int i=0; i<NUM_THREADS; i++) {
-            all_vectors_sizes.merge(*thread_data[i].vectors_sizes);
-        }
         printAndExportHistogram(max_vector.ball_size, &all_vectors_sizes, PRINT_HISTOGRAM, EXPORT_HISTOGRAM);
+    }
+
+    // print the max ball size, and all it's vectors
+    cout << endl << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is: " << max_vector.ball_size << endl;
+    for (auto iter = all_vectors_sizes.begin(); iter != all_vectors_sizes.end(); ++iter) {
+        if (iter->second == max_vector.ball_size) {
+            cout << "    max vector: " << iter->first << " (" << iter->second << ")" << endl;
+        }
     }
 
     return 0;
