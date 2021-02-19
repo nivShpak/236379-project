@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <pthread.h>
 #include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <iterator>
 
 #include "vectors.h"
 #include "settings.h"
@@ -157,27 +160,28 @@ void *splitCheck(void *max_vector_p) {
         }
     }
 
-    cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
-         << duration_cast<seconds>(steady_clock::now() - start).count() << "s"
-         << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
-
+    if (VERBOSITY >= 1) {
+        cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
+             << duration_cast<seconds>(steady_clock::now() - start).count() << "s"
+             << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
+    }
     return nullptr;
 }
 
+void initiateMaxVector(struct max_vector &v, int mask = -1) {
+    strcpy(v.s_vector, "X");
+    v.ball_size = 0;
+    v.vectors_sizes = new unordered_map<string, int>;
+    v.mask = mask;
+}
+
 int main() {
-    struct max_vector max_vector = {
-            .ball_size = 0,
-            .mask = 0
-    };
-    strcpy(max_vector.s_vector, "X");
+    struct max_vector max_vector;
+    initiateMaxVector(max_vector);
     // initiate the arguments for the threads
     struct max_vector thread_data[NUM_THREADS];
     for (int i = 0; i < NUM_THREADS; i++) {
-        auto *vectors_sizes = new unordered_map<string, int>;
-        strcpy(thread_data[i].s_vector, "X");
-        thread_data[i].ball_size = 0;
-        thread_data[i].mask = i;
-        thread_data[i].vectors_sizes = vectors_sizes;
+        initiateMaxVector(thread_data[i], i);
     }
     pthread_t ptid[NUM_THREADS];
 
@@ -199,19 +203,37 @@ int main() {
 
     unordered_map<string, int> all_vectors_sizes;
     for (int i=0; i<NUM_THREADS; i++) {
-        all_vectors_sizes.merge(*thread_data[i].vectors_sizes);
+        for (auto it = thread_data[i].vectors_sizes->begin(); it != thread_data[i].vectors_sizes->end(); ++it) {
+            all_vectors_sizes.insert({it->first, it->second});
+        }
     }
     if (EXPORT_HISTOGRAM || PRINT_HISTOGRAM) {
         printAndExportHistogram(max_vector.ball_size, &all_vectors_sizes, PRINT_HISTOGRAM, EXPORT_HISTOGRAM);
     }
 
-    // print the max ball size, and all it's vectors
-    cout << endl << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is: " << max_vector.ball_size << endl;
-    for (auto iter = all_vectors_sizes.begin(); iter != all_vectors_sizes.end(); ++iter) {
+    // print the max ball size, and all it's vectors. Create the export file as well
+    cout << endl << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is " << max_vector.ball_size
+         << ". max vectors are:" << endl;
+    ofstream outputFile;
+    if (OUTPUT_MAX_VECTORS > 0) {
+        outputFile.open(MAX_VECTORS_FILE);
+        outputFile << "n" << "," << "vector" << "," << "ball_size" << endl;
+    }
+        for (auto iter = all_vectors_sizes.begin(); iter != all_vectors_sizes.end(); ++iter) {
         if (iter->second == max_vector.ball_size) {
-            cout << "    max vector: " << iter->first << " (" << iter->second << ")" << endl;
+            cout << "\t" << iter->first << endl;
+            if (OUTPUT_MAX_VECTORS > 0) {
+                outputFile << VECTORS_LENGTH << "," << iter->first << "," << iter->second << endl;
+            }
         }
     }
+    cout << endl;
+
+    // cleanup
+    for (int i = 0; i < NUM_THREADS; i++) {
+        delete thread_data[i].vectors_sizes;
+    }
+    delete max_vector.vectors_sizes;
 
     return 0;
 }
