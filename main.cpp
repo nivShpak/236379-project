@@ -140,8 +140,8 @@ void *splitCheck(void *max_vector_p) {
             continue;
         }
 
-        if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5) {
-            if (VERBOSITY >= 1)
+        if (VERBOSITY >= 1) {
+            if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5)
                 cout << "mask " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
             middle = steady_clock::now();
         }
@@ -154,9 +154,11 @@ void *splitCheck(void *max_vector_p) {
         if (tmp_size > max_vector->ball_size) {
             max_vector->ball_size = tmp_size;
             strncpy(max_vector->s_vector, v.get_vector().c_str(), VECTORS_LENGTH + 1);
-            if (VERBOSITY >= 2)
-                cout << max_vector->mask << ": " << max_vector->s_vector << "    " << tmp_size << endl;
-            middle = steady_clock::now();
+            if (VERBOSITY >= 1) {
+                if (VERBOSITY >= 2)
+                    cout << max_vector->mask << ": " << max_vector->s_vector << "    " << tmp_size << endl;
+                middle = steady_clock::now();
+            }
         }
     }
 

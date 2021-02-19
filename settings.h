@@ -14,7 +14,7 @@
 #define STR(x) STRINGIFY(x)
 
 // general arguments
-#define VECTORS_LENGTH 10
+#define VECTORS_LENGTH 19
 #define NUM_THREADS    32
 #define HISTOGRAM_FILE_NAME "./2-indel_histogram_n=" STR(VECTORS_LENGTH) ".csv"
 #define MAX_VECTORS_FILE "./max_vecrtors_n=" STR(VECTORS_LENGTH) ".csv"

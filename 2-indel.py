@@ -58,15 +58,15 @@ parser.add_argument('-b', '--bucket_size', default=20, help='histogram bucket si
 parser.add_argument('-o', '--output', default=1, help='output max vectors to a file')
 args = parser.parse_args()
 
-lengthes = args.n.split(',')
-for n in lengthes:
+lengths = args.n.split(',')
+for n in lengths:
     # create settings.h file
     settings = create_h_file(args, n)
     with open("settings.h", "w") as f:
         f.write(settings)
 
     # compile, run the calculator, and remove it
-    print_and_execute(f"g++ ./*.cpp -std=c++11 -pthread -o {n}_calculator")
+    print_and_execute(f"g++ ./*.cpp -std=c++11 -pthread -O3 -o {n}_calculator")
     start = time.time()
     print_and_execute(f"./{n}_calculator")
     end = time.time()
