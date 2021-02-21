@@ -15,6 +15,9 @@
 using namespace std;
 using namespace std::chrono;
 
+extern uint32_t skippedVectors;
+extern uint32_t skippedOperations;
+
 struct max_vector {
     char s_vector[VECTORS_LENGTH + 1];
     int ball_size;
@@ -213,8 +216,12 @@ int main() {
         printAndExportHistogram(max_vector.ball_size, &all_vectors_sizes, PRINT_HISTOGRAM, EXPORT_HISTOGRAM);
     }
 
+    cout << endl;
+    if (VERBOSITY >= 1) {
+        cout << "skipped " << skippedVectors << " vectors in the middle, reducing " << skippedOperations << " calcTwoInsertions() operations" << endl;
+    }
     // print the max ball size, and all it's vectors. Create the export file as well
-    cout << endl << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is " << max_vector.ball_size
+    cout << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is " << max_vector.ball_size
          << ". max vectors are:" << endl;
     ofstream outputFile;
     if (OUTPUT_MAX_VECTORS > 0) {

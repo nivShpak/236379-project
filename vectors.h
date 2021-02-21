@@ -20,6 +20,7 @@ class vectors {
     uint8_t size;
     void calcTwoInsertions(unordered_set<string>& hash, string vec);
     void calcOneInsertion(unordered_set<string>& hash, string vec);
+    int calcTwoInsertionsWithStop(unordered_set<string>& hash1);
 public:
     explicit vectors(const string &vec): s_vector(vec), size(vec.size()){}
     int twoBallSize();

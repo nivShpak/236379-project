@@ -4,12 +4,17 @@
 #include <unordered_map>
 
 #include "vectors.h"
+#include "settings.h"
+
+uint32_t maxBallSize;
+uint32_t skippedVectors;
+uint64_t skippedOperations;
 
 int vectors::twoBallSize() {
+    // unordered_set<string> hash2;
+    // hash2.max_load_factor(0.25);hash2.reserve(500);
     unordered_set<string> hash1;
-    unordered_set<string> hash2;
     hash1.max_load_factor(0.25);hash1.reserve(500);
-    hash2.max_load_factor(0.25);hash2.reserve(500);
 
     string s = this->s_vector;
     for(int i=0; i<this->size-1; ++i) {
@@ -25,11 +30,12 @@ int vectors::twoBallSize() {
             tmp_s.erase(i,1);
             if(hash1.find(tmp_s) == hash1.end()) {
                 hash1.insert(tmp_s);
-                this->calcTwoInsertions(hash2, tmp_s);
+                // this->calcTwoInsertions(hash2, tmp_s);
             }
         }
     }
-    return hash2.size();
+    return this->calcTwoInsertionsWithStop(hash1);
+    // return hash2.size();
 }
 
 void insert_j(int j, string s, unordered_set<string>& hash, char prev_j) {
@@ -70,4 +76,28 @@ void vectors::calcTwoInsertions(unordered_set<string>& hash, string vec){
         }
         prev_i = vec[i];
     }
+}
+
+int vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
+    unordered_set<string> hash2;
+    hash2.max_load_factor(0.25);hash2.reserve(500);
+    int hash1Size = hash1.size();
+    uint32_t potentialVectors = hash1Size * TWO_INSERTIONS_BALL_SIZE;
+
+    int i = 0;
+    for (auto it = hash1.begin(); it != hash1.end(); ++it) {
+        if ( (!(PRINT_HISTOGRAM || EXPORT_HISTOGRAM)) && potentialVectors < maxBallSize) {
+            skippedVectors++;
+            skippedOperations += hash1Size - i;
+            break;
+        }
+        i++;
+        calcTwoInsertions(hash2, *it);
+        potentialVectors = hash2.size() + ((hash1Size - i) * TWO_INSERTIONS_BALL_SIZE);
+    }
+
+    uint32_t thisBallSize = hash2.size();
+    if (thisBallSize > maxBallSize)
+        maxBallSize = thisBallSize;
+    return thisBallSize;
 }
