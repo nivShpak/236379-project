@@ -16,7 +16,8 @@ using namespace std;
 using namespace std::chrono;
 
 extern uint32_t skippedVectors;
-extern uint32_t skippedOperations;
+extern uint64_t skippedBallsCalculations;
+extern uint64_t executedBallsCalculations;
 
 struct max_vector {
     char s_vector[VECTORS_LENGTH + 1];
@@ -145,7 +146,7 @@ void *splitCheck(void *max_vector_p) {
 
         if (VERBOSITY >= 1) {
             if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5)
-                cout << "mask " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
+                cout << "thread " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
             middle = steady_clock::now();
         }
         vectors v(s);
@@ -166,7 +167,7 @@ void *splitCheck(void *max_vector_p) {
     }
 
     if (VERBOSITY >= 1) {
-        cout << "mask " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
+        cout << "thread " << max_vector->mask << " calculated " << vectors_calculated << " vectors in "
              << duration_cast<seconds>(steady_clock::now() - start).count() << "s"
              << " max_vector is: " << max_vector->s_vector << " ball size: " << max_vector->ball_size << endl;
     }
@@ -218,7 +219,9 @@ int main() {
 
     cout << endl;
     if (VERBOSITY >= 1) {
-        cout << "skipped " << skippedVectors << " vectors in the middle, reducing " << skippedOperations << " calcTwoInsertions() operations" << endl;
+        cout << "skipped " << skippedVectors << " vectors in the middle, avoiding "
+        << skippedBallsCalculations << " calls to calcTwoInsertions(), while executing " << executedBallsCalculations << " calls ("
+        << round((skippedBallsCalculations*100.0 / (skippedBallsCalculations + executedBallsCalculations))) << "% save)."  << endl;
     }
     // print the max ball size, and all it's vectors. Create the export file as well
     cout << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is " << max_vector.ball_size

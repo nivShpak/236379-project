@@ -8,7 +8,8 @@
 
 uint32_t maxBallSize;
 uint32_t skippedVectors;
-uint64_t skippedOperations;
+uint64_t skippedBallsCalculations;
+uint64_t executedBallsCalculations;
 
 int vectors::twoBallSize() {
     // unordered_set<string> hash2;
@@ -54,6 +55,7 @@ void insert_j(int j, string s, unordered_set<string>& hash, char prev_j) {
 }
 
 void vectors::calcTwoInsertions(unordered_set<string>& hash, string vec){
+    executedBallsCalculations++;
     string tmp;
     char prev_i = 'x';
     char prev_j = 'x';
@@ -88,7 +90,7 @@ int vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
     for (auto it = hash1.begin(); it != hash1.end(); ++it) {
         if ( (!(PRINT_HISTOGRAM || EXPORT_HISTOGRAM)) && potentialVectors < maxBallSize) {
             skippedVectors++;
-            skippedOperations += hash1Size - i;
+            skippedBallsCalculations += hash1Size - i;
             break;
         }
         i++;

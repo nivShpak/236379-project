@@ -51,7 +51,7 @@ def print_and_execute(command):
 parser = argparse.ArgumentParser(description='', formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('-v', '--verbosity', default=0, help='how much logging to print. Could be 0,1,2. Defaults to 0')
 parser.add_argument('-n', '--n', default=15, help='All vector length separated in commas. Defaults to 15')
-parser.add_argument('-t', '--threads', default=32, help='Number of threads to run. Defaults to 32')
+parser.add_argument('-t', '--threads', default=57, help='Number of threads to run. Defaults to 57, Avoid using powers of 2 to improve performance.')
 parser.add_argument('-q', '--quick', default=1, help='Calculate only vectors with max run length <= 2')
 parser.add_argument('-e', '--export_histogram', default=0, help='export histogram to a file')
 parser.add_argument('-p', '--print_histogram', default=0, help='print histogram')
