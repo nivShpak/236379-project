@@ -25,6 +25,7 @@ int vectors::twoBallSize() {
             tmp_s.erase(i,1);
             if(hash1.find(tmp_s) == hash1.end()) {
                 hash1.insert(tmp_s);
+                this->calcTwoInsertions(hash2, tmp_s);
             }
         }
     }
