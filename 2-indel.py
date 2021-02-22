@@ -26,7 +26,7 @@ def create_h_file(arguments, vector_length):
 #define VECTORS_LENGTH {vector_length}
 #define NUM_THREADS    {arguments.threads}
 #define HISTOGRAM_FILE_NAME "./2-indel_histogram_n=" STR(VECTORS_LENGTH) ".csv"
-#define MAX_VECTORS_FILE "./max_vecrtors_n=" STR(VECTORS_LENGTH) ".csv"
+#define MAX_VECTORS_FILE "./max_vectors_n=" STR(VECTORS_LENGTH) ".csv"
 #define VERBOSITY {arguments.verbosity}
 
 // flags to manipulate the type of run and the output

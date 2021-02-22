@@ -14,11 +14,11 @@
 #define STR(x) STRINGIFY(x)
 
 // general arguments
-#define VECTORS_LENGTH 18
-#define NUM_THREADS    32
+#define VECTORS_LENGTH 21
+#define NUM_THREADS    57
 #define HISTOGRAM_FILE_NAME "./2-indel_histogram_n=" STR(VECTORS_LENGTH) ".csv"
-#define MAX_VECTORS_FILE "./max_vecrtors_n=" STR(VECTORS_LENGTH) ".csv"
-#define VERBOSITY 0
+#define MAX_VECTORS_FILE "./max_vectors_n=" STR(VECTORS_LENGTH) ".csv"
+#define VERBOSITY 1
 
 // flags to manipulate the type of run and the output
 #define TWO_MAX_RUN_LENGTH 0
