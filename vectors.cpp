@@ -88,7 +88,7 @@ int vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
 
     int i = 0;
     for (auto it = hash1.begin(); it != hash1.end(); ++it) {
-        if ( (!(PRINT_HISTOGRAM || EXPORT_HISTOGRAM)) && potentialVectors < maxBallSize) {
+        if ( (!IS_HISTOGRAM) && potentialVectors < maxBallSize) {
             skippedVectors++;
             skippedBallsCalculations += (hash1Size - i);
             break;

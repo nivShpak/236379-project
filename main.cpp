@@ -6,7 +6,6 @@
 #include <pthread.h>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <iterator>
 
 #include "vectors.h"
@@ -18,6 +17,7 @@ using namespace std::chrono;
 extern uint32_t skippedVectors;
 extern uint64_t skippedBallsCalculations;
 extern uint64_t executedBallsCalculations;
+int prints_counter;
 
 struct max_vector {
     char s_vector[VECTORS_LENGTH + 1];
@@ -135,33 +135,30 @@ void *splitCheck(void *max_vector_p) {
             continue;
         }
 
-        // check if we calculated the reverse
-        string s_reverse = s;
-        reverse(s_reverse.begin(), s_reverse.end());
-        // avoiding the reverse will complicate the calculation of the histogram, so we will do double work in that case
-        if ((!(EXPORT_HISTOGRAM || PRINT_HISTOGRAM)) &&
-            (vectors_sizes->find(s_reverse) != vectors_sizes->end())) {
-            continue;
-        }
-
-        if (VERBOSITY >= 1) {
-            if (duration_cast<seconds>(steady_clock::now() - middle).count() > 5)
-                cout << "thread " << max_vector->mask << ": checked " << i/NUM_THREADS << " (calculated " << vectors_calculated << ") of " << total_vectors/NUM_THREADS << endl;
-            middle = steady_clock::now();
+        if (VERBOSITY >= 2 && VECTORS_LENGTH > 15) {
+            // 13 is a magic number so not too much is getting printed
+            if ((i > 0) && (prints_counter % NUM_THREADS == max_vector->mask) && ((i/NUM_THREADS) % (1<<(VECTORS_LENGTH - 13))) == 0) {
+                prints_counter++;
+                cout << duration_cast<seconds>(steady_clock::now() - start).count() << "s - thread " << max_vector->mask << ": checked "
+                     << i / NUM_THREADS << " of " << total_vectors / NUM_THREADS / 2 << " (" << round((i*200.0) / (total_vectors)) << "%)" << endl;
+            }
         }
         vectors v(s);
         tmp_size = v.twoBallSize();
         vectors_calculated++;
 
-        vectors_sizes->insert({s, tmp_size});
+        if (IS_HISTOGRAM)
+            vectors_sizes->insert({s, tmp_size});
 
-        if (tmp_size > max_vector->ball_size) {
+        if (tmp_size >= max_vector->ball_size) {
+            if (!IS_HISTOGRAM)
+                vectors_sizes->insert({s, tmp_size});
             max_vector->ball_size = tmp_size;
             strncpy(max_vector->s_vector, v.get_vector().c_str(), VECTORS_LENGTH + 1);
-            if (VERBOSITY >= 1) {
-                if (VERBOSITY >= 2)
-                    cout << max_vector->mask << ": " << max_vector->s_vector << "    " << tmp_size << endl;
+            if (VERBOSITY >= 3) {
                 middle = steady_clock::now();
+                cout << duration_cast<seconds>(middle - start).count() << "s - thread " << max_vector->mask
+                     << ": new max_vector: " << max_vector->s_vector << " ball size: " << tmp_size << endl;
             }
         }
     }
@@ -212,8 +209,9 @@ int main() {
         for (auto it = thread_data[i].vectors_sizes->begin(); it != thread_data[i].vectors_sizes->end(); ++it) {
             all_vectors_sizes.insert({it->first, it->second});
         }
+        thread_data[i].vectors_sizes->clear();
     }
-    if (EXPORT_HISTOGRAM || PRINT_HISTOGRAM) {
+    if (IS_HISTOGRAM) {
         printAndExportHistogram(max_vector.ball_size, &all_vectors_sizes, PRINT_HISTOGRAM, EXPORT_HISTOGRAM);
     }
 
