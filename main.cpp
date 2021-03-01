@@ -152,7 +152,8 @@ void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes,
 void *splitCheck(void *max_vector_p) {
     auto start = steady_clock::now();
     auto middle = steady_clock::now();
-    uint64_t total_vectors = 1<<VECTORS_LENGTH;
+    uint64_t total_vectors = 1;
+    total_vectors <<= VECTORS_LENGTH;
     uint64_t vectors_calculated = 0;
     int64_t tmp_size = 0;
     struct max_vector *max_vector = ((struct max_vector *)max_vector_p);
