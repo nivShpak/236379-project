@@ -7,7 +7,7 @@ To just run the calculator (supporting only unix):
 ```
 ./2-indel.py -n <vector_length>
 ```
-The calculator will take O(2^n) time to run. For n=26 it could more than an hour to finish.  
+The calculator will take O(2^n) time to run. For n=26 it could take more than an hour to finish.  
 
 ## Calculation Process
 the script will check for each vector of length n all the possible 2 deletions and 2 insertions, and will count how many vectors are generated at the process.<br>
