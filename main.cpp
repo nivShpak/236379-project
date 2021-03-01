@@ -110,13 +110,14 @@ void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes,
     if (isExport) {
         histFile.open(HISTOGRAM_FILE_NAME);
         if (MAX_RUN_LENGTH > 0)
-            histFile << "ball_size_bucket,num_vectors(2_max_run_length_only)" << endl;
+            histFile << "ball_size_bucket,num_vectors(" << MAX_RUN_LENGTH << "_max_run_length_only)" << endl;
         else
             histFile << "ball_size_bucket,num_vectors" << endl;
     }
     if (isPrint) {
+        cout << endl;
         if (MAX_RUN_LENGTH > 0)
-            cout << "ball_size_bucket,num_vectors(2_max_run_length_only)" << endl;
+            cout << "ball_size_bucket,num_vectors(" << MAX_RUN_LENGTH << "_max_run_length_only)" << endl;
         else
             cout << "ball_size_bucket,num_vectors" << endl;
     }
@@ -151,9 +152,9 @@ void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes,
 void *splitCheck(void *max_vector_p) {
     auto start = steady_clock::now();
     auto middle = steady_clock::now();
-    int total_vectors = 1<<VECTORS_LENGTH;
-    int vectors_calculated = 0;
-    int tmp_size = 0;
+    uint64_t total_vectors = 1<<VECTORS_LENGTH;
+    uint64_t vectors_calculated = 0;
+    int64_t tmp_size = 0;
     struct max_vector *max_vector = ((struct max_vector *)max_vector_p);
     unordered_map<string, int> *vectors_sizes = max_vector->vectors_sizes;
     for (int i = max_vector->mask; i < total_vectors; i += NUM_THREADS) {
@@ -206,21 +207,12 @@ void *splitCheck(void *max_vector_p) {
 
 void initiateMaxVector(struct max_vector &v, int mask = -1, const char *vector = nullptr) {
     if (vector)
-        strcpy(v.s_vector, vector);
-        else
-            strcpy(v.s_vector, "X");
+        strncpy(v.s_vector, vector, VECTORS_LENGTH + 1);
+    else
+        strncpy(v.s_vector, "X", VECTORS_LENGTH + 1);
     v.ball_size = 0;
     v.vectors_sizes = new unordered_map<string, int>;
     v.mask = mask;
-}
-
-int main1() {
-    vectors v1("010101010101010101010");
-    cout << v1.get_vector() << " runs: " << getNumRuns(v1.get_vector()) << "   " << v1.twoBallSize() << endl;
-
-    vectors v2("010101010001010100010");
-    cout << v2.get_vector() << " runs: " << getNumRuns(v2.get_vector()) << "   " << v2.twoBallSize() << endl;
-    return 0;
 }
 
 int main() {
@@ -234,7 +226,6 @@ int main() {
     }
     pthread_t ptid[NUM_THREADS];
 
-    // calculate first the maxBallSize of 001001001... to start it with a relatively high value.
     if (!IS_HISTOGRAM) {
         vectors v1(max_vector.s_vector);
         max_vector.ball_size = v1.twoBallSize();

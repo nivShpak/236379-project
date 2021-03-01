@@ -2,7 +2,6 @@
 // Created by nivh2 on 2/16/2021.
 //
 #include <unordered_map>
-#include <iostream>
 
 #include "vectors.h"
 #include "settings.h"
@@ -29,9 +28,9 @@ static inline int deletionBallUpperBound(const string& s) {
     return (runs * (runs - 1))/2;
 }
 
-int vectors::twoBallSize() {
+int64_t vectors::twoBallSize() {
     // optimization to stop the calculation before doing any work.
-    if ((deletionBallUpperBound(this->s_vector) * TWO_INSERTIONS_BALL_SIZE) < maxBallSize) {
+    if ((!IS_HISTOGRAM) && (deletionBallUpperBound(this->s_vector) * TWO_INSERTIONS_BALL_SIZE) < maxBallSize) {
         skippedVectors++;
         return -1;
     }
@@ -104,7 +103,7 @@ void vectors::calcTwoInsertions(unordered_set<string>& hash, string vec){
     }
 }
 
-int vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
+int64_t vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
     unordered_set<string> hash2;
     hash2.reserve(2*maxBallSize);
     int hash1Size = hash1.size();
@@ -121,7 +120,7 @@ int vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
         potentialVectors = hash2.size() + ((hash1Size - i) * TWO_INSERTIONS_BALL_SIZE);
     }
 
-    uint64_t thisBallSize = hash2.size();
+    int64_t thisBallSize = hash2.size();
     if (thisBallSize > maxBallSize) {
         maxBallSize = thisBallSize;
     }

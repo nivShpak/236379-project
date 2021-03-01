@@ -11,19 +11,19 @@
 #define STR(x) STRINGIFY(x)
 
 // general arguments
-#define VECTORS_LENGTH 15
+#define VECTORS_LENGTH 10
 #define NUM_THREADS    57
 #define HISTOGRAM_FILE_NAME "./2-indel_histogram_n=" STR(VECTORS_LENGTH) ".csv"
 #define MAX_VECTORS_FILE "./max_vectors_n=" STR(VECTORS_LENGTH) ".csv"
-#define VERBOSITY 1
+#define VERBOSITY 2
 
 // flags to manipulate the type of run and the output
-#define MAX_RUN_LENGTH 9
+#define MAX_RUN_LENGTH -1
 #define EXPORT_HISTOGRAM 0
-#define PRINT_HISTOGRAM 0
+#define PRINT_HISTOGRAM 1
 #define HISTOGRAM_BUCKET_SIZE 20
 #define OUTPUT_MAX_VECTORS 1
 #define TWO_INSERTIONS_BALL_SIZE ((VECTORS_LENGTH)*(VECTORS_LENGTH + 1))/2
-#define IS_HISTOGRAM PRINT_HISTOGRAM || EXPORT_HISTOGRAM
+#define IS_HISTOGRAM (PRINT_HISTOGRAM || EXPORT_HISTOGRAM)
 
 #endif //UNTITLED2_SETTINGS_H

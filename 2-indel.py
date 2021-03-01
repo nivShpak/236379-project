@@ -33,7 +33,7 @@ def create_h_file(arguments, vector_length):
 #define HISTOGRAM_BUCKET_SIZE {arguments.bucket_size}
 #define OUTPUT_MAX_VECTORS {arguments.output}
 #define TWO_INSERTIONS_BALL_SIZE ((VECTORS_LENGTH)*(VECTORS_LENGTH + 1))/2
-#define IS_HISTOGRAM PRINT_HISTOGRAM || EXPORT_HISTOGRAM
+#define IS_HISTOGRAM (PRINT_HISTOGRAM || EXPORT_HISTOGRAM)
 
 #endif //UNTITLED2_SETTINGS_H
 '''
@@ -57,6 +57,7 @@ parser.add_argument('-b', '--bucket_size', default=20, help='histogram bucket si
 parser.add_argument('-o', '--output', default=1, help='output max vectors to a file')
 args = parser.parse_args()
 
+cur_time = int(time.time())
 lengths = args.n.split(',')
 for n in lengths:
     # create settings.h file
@@ -65,10 +66,10 @@ for n in lengths:
         f.write(settings)
 
     # compile, run the calculator, and remove it
-    print_and_execute(f"g++ ./*.cpp -std=c++11 -pthread -O3 -o {n}_calculator")
+    print_and_execute(f"g++ ./*.cpp -std=c++11 -pthread -O3 -o {n}_calculator_{cur_time}")
     start = time.time()
-    print_and_execute(f"./{n}_calculator")
+    print_and_execute(f"./{n}_calculator_{cur_time}")
     end = time.time()
 
     print(f"calculation for n={n} with {args.threads} threads took {round(end - start, 1)}s\n")
-    print_and_execute(f"rm ./{n}_calculator")
+    print_and_execute(f"rm ./{n}_calculator_{cur_time}")
