@@ -3,9 +3,9 @@ This calculator is used to find the max 2-indel ball for binary vectors with len
 The script will iterate over all the vectors of size n, and for each one will calculate it's 2-indel ball size.<br>
 At the end, it will print all the vectors that generate the maximum 2-indel ball.
 
-To just run the calculator:
+To just run the calculator (supporting only unix):
 ```
-2-indel.py -n <vector_length>
+./2-indel.py -n <vector_length>
 ```
 The calculator will take O(2^n) time to run. For n=26 it could more than an hour to finish.  
 
@@ -22,7 +22,7 @@ In order to run the calculator, you just need to git-clone the repository run th
 ```
 git clone https://github.com/nivShpak/Yaakombi.git
 cd Yaakombi
-2-indel.py -n <vector_length>
+./2-indel.py -n <vector_length>
 ```
 
 ### parameters
@@ -48,18 +48,18 @@ Histogram parameters - not recommended for big values of n:
 ```
 ### examples
 ```
-2-indel.py -n 14 -v 1 -e 1 
+./2-indel.py -n 14 -v 1 -e 1 
 ```
 Will calculate the 2-indel balls for vectors in lengths 14, and export ball sizes histogram to a file named 2indel_histogram_n14.csv in the same directory where the script was executed. Also, the script will create a file named max_vectors_n14.csv in the same directory with all the vectors generating the maximum 2-indel ball size.
 
 ```
-2-indel.py -n 14 -p 1
+./2-indel.py -n 14 -p 1
 ```
 Will calculate the 2-indel balls for vectors in lengths 14, and print the histogram values to the shell. 
 Also, the script will create a file named max_vectors_n14.csv in the same directory with all the vectors generating the maximum 2-indel ball size.
 
 ```
-2-indel.py -n 28 -v 2 -o 0
+./2-indel.py -n 28 -v 2 -o 0
 ```
 Will calculate the 2-indel balls for vectors in lengths 28 (supposed to take a few hours), will print them to the screen, and will not export them to a file. 
 
