@@ -2,16 +2,40 @@
 // Created by nivh2 on 2/16/2021.
 //
 #include <unordered_map>
+#include <iostream>
 
 #include "vectors.h"
 #include "settings.h"
 
-uint32_t maxBallSize;
-uint32_t skippedVectors;
+uint64_t maxBallSize;
+uint64_t skippedVectors;
 uint64_t skippedBallsCalculations;
 uint64_t executedBallsCalculations;
 
+int getNumRuns(const string& s) {
+    int numRuns = 1;
+    for (int i = 1; i < s.size(); i++) {
+        if (s[i] == s[i-1])
+            continue;
+        else
+            numRuns++;
+    }
+    return numRuns;
+}
+
+static inline int deletionBallUpperBound(const string& s) {
+    // get the number of runs
+    int runs = getNumRuns(s);
+    return (runs * (runs - 1))/2;
+}
+
 int vectors::twoBallSize() {
+    // optimization to stop the calculation before doing any work.
+    if ((deletionBallUpperBound(this->s_vector) * TWO_INSERTIONS_BALL_SIZE) < maxBallSize) {
+        skippedVectors++;
+        return -1;
+    }
+
     // unordered_set<string> hash2;
     // hash2.max_load_factor(0.25);hash2.reserve(500);
     unordered_set<string> hash1;
@@ -89,17 +113,17 @@ int vectors::calcTwoInsertionsWithStop(unordered_set<string> &hash1) {
     int i = 0;
     for (auto it = hash1.begin(); it != hash1.end(); ++it) {
         if ( (!IS_HISTOGRAM) && potentialVectors < maxBallSize) {
-            skippedVectors++;
             skippedBallsCalculations += (hash1Size - i);
-            break;
+            return -1;
         }
         i++;
         calcTwoInsertions(hash2, *it);
         potentialVectors = hash2.size() + ((hash1Size - i) * TWO_INSERTIONS_BALL_SIZE);
     }
 
-    uint32_t thisBallSize = hash2.size();
-    if (thisBallSize > maxBallSize)
+    uint64_t thisBallSize = hash2.size();
+    if (thisBallSize > maxBallSize) {
         maxBallSize = thisBallSize;
+    }
     return thisBallSize;
 }

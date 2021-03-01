@@ -10,10 +10,7 @@ def create_h_file(arguments, vector_length):
     header_text = f'''//
 // File created by Idan Fischman on 17/02/2021.
 // This file is used to set the arguments for the 2-indel ball radius calculator.
-// To find out only the largest vector, we recommend setting TWO_MAX_RUN_LENGTH = 1.
-// And only unset it if you want to calculate a full histogram.
-// VERBOSITY could be 0,1,2 depending how much info to print. VERBOSITY = 1 could be helpful to get the status when running
-// with a large vector length (20 or higher for example). VERBOSITY = 2 will show the vector generating the max ball so far, for each thread.
+// We do not recommend to edit this file directly, but use the 2-indel.py file to generate it for each run.
 //
 
 #ifndef UNTITLED2_SETTINGS_H
@@ -30,7 +27,7 @@ def create_h_file(arguments, vector_length):
 #define VERBOSITY {arguments.verbosity}
 
 // flags to manipulate the type of run and the output
-#define TWO_MAX_RUN_LENGTH {arguments.quick}
+#define MAX_RUN_LENGTH {arguments.max_run_length}
 #define EXPORT_HISTOGRAM {arguments.export_histogram}
 #define PRINT_HISTOGRAM {arguments.print_histogram}
 #define HISTOGRAM_BUCKET_SIZE {arguments.bucket_size}
@@ -50,10 +47,10 @@ def print_and_execute(command):
 
 # parse argument to the calculator
 parser = argparse.ArgumentParser(description='', formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument('-v', '--verbosity', default=0, help='how much logging to print. Could be 0,1,2. Defaults to 0')
+parser.add_argument('-v', '--verbosity', default=0, help='how much logging to print. Could be 0,1,2,3. Defaults to 0')
 parser.add_argument('-n', '--n', default=15, help='All vector length separated in commas. Defaults to 15')
 parser.add_argument('-t', '--threads', default=57, help='Number of threads to run. Defaults to 57, Avoid using powers of 2 to improve performance.')
-parser.add_argument('-q', '--quick', default=0, help='Calculate only vectors with max run length <= 2')
+parser.add_argument('-r', '--max_run_length', default=-1, help='Calculate only vectors with max run length <= of the number provided')
 parser.add_argument('-e', '--export_histogram', default=0, help='export histogram to a file')
 parser.add_argument('-p', '--print_histogram', default=0, help='print histogram')
 parser.add_argument('-b', '--bucket_size', default=20, help='histogram bucket size')

@@ -14,7 +14,7 @@
 using namespace std;
 using namespace std::chrono;
 
-extern uint32_t skippedVectors;
+extern uint64_t skippedVectors;
 extern uint64_t skippedBallsCalculations;
 extern uint64_t executedBallsCalculations;
 int prints_counter;
@@ -46,7 +46,39 @@ int longestRun(string s) {
     return max_run;
 }
 
+/*
+ * We assume that the vector 010101 011001011001... 01010 will generate a large 2-indel ball.
+ */
+string createStartVector(int vectorSize) {
+    string s = "";
+    int j = 0;
+    int i = vectorSize / 5;
+    for (j = 0; j < i; j++) {
+        if (j % 2 == 0)
+            s.append("0");
+        else
+            s.append("1");
+    }
+
+    if (VECTORS_LENGTH > 6) {
+        for (; j < vectorSize - i; j += 6) {
+            s.append("011001");
+        }
+    }
+
+    for (; j < vectorSize; j++) {
+        if (j%2 == 0)
+            s.append("0");
+        else
+            s.append("1");
+    }
+    return s;
+}
+
 bool hasRunLongerThan(string s, int x) {
+    if (x <= 0)
+        return false;
+
     int current_run=0;
     int i = 0;
     char curr_char = s[0];
@@ -77,13 +109,13 @@ void printAndExportHistogram(int max, unordered_map<string, int> *vectors_sizes,
 
     if (isExport) {
         histFile.open(HISTOGRAM_FILE_NAME);
-        if (TWO_MAX_RUN_LENGTH)
+        if (MAX_RUN_LENGTH > 0)
             histFile << "ball_size_bucket,num_vectors(2_max_run_length_only)" << endl;
         else
             histFile << "ball_size_bucket,num_vectors" << endl;
     }
     if (isPrint) {
-        if (TWO_MAX_RUN_LENGTH)
+        if (MAX_RUN_LENGTH > 0)
             cout << "ball_size_bucket,num_vectors(2_max_run_length_only)" << endl;
         else
             cout << "ball_size_bucket,num_vectors" << endl;
@@ -131,7 +163,8 @@ void *splitCheck(void *max_vector_p) {
             // it's enough to check ony vectors starting with '0'
             break;
         }
-        if (TWO_MAX_RUN_LENGTH && hasRunLongerThan(s, 2)) {
+        if ((!IS_HISTOGRAM) && hasRunLongerThan(s, MAX_RUN_LENGTH)) {
+            skippedVectors++;
             continue;
         }
 
@@ -171,22 +204,42 @@ void *splitCheck(void *max_vector_p) {
     return nullptr;
 }
 
-void initiateMaxVector(struct max_vector &v, int mask = -1) {
-    strcpy(v.s_vector, "X");
+void initiateMaxVector(struct max_vector &v, int mask = -1, const char *vector = nullptr) {
+    if (vector)
+        strcpy(v.s_vector, vector);
+        else
+            strcpy(v.s_vector, "X");
     v.ball_size = 0;
     v.vectors_sizes = new unordered_map<string, int>;
     v.mask = mask;
 }
 
+int main1() {
+    vectors v1("010101010101010101010");
+    cout << v1.get_vector() << " runs: " << getNumRuns(v1.get_vector()) << "   " << v1.twoBallSize() << endl;
+
+    vectors v2("010101010001010100010");
+    cout << v2.get_vector() << " runs: " << getNumRuns(v2.get_vector()) << "   " << v2.twoBallSize() << endl;
+    return 0;
+}
+
 int main() {
     struct max_vector max_vector;
-    initiateMaxVector(max_vector);
+    unordered_map<string, int> all_vectors_sizes;
+    initiateMaxVector(max_vector, -1, createStartVector(VECTORS_LENGTH).c_str());
     // initiate the arguments for the threads
     struct max_vector thread_data[NUM_THREADS];
     for (int i = 0; i < NUM_THREADS; i++) {
         initiateMaxVector(thread_data[i], i);
     }
     pthread_t ptid[NUM_THREADS];
+
+    // calculate first the maxBallSize of 001001001... to start it with a relatively high value.
+    if (!IS_HISTOGRAM) {
+        vectors v1(max_vector.s_vector);
+        max_vector.ball_size = v1.twoBallSize();
+        all_vectors_sizes.insert({v1.get_vector(), max_vector.ball_size});
+    }
 
     // run the balls calculation in parallel
     for(int i = 0; i < NUM_THREADS; i++) {
@@ -204,7 +257,6 @@ int main() {
         }
     }
 
-    unordered_map<string, int> all_vectors_sizes;
     for (int i=0; i<NUM_THREADS; i++) {
         for (auto it = thread_data[i].vectors_sizes->begin(); it != thread_data[i].vectors_sizes->end(); ++it) {
             all_vectors_sizes.insert({it->first, it->second});
@@ -217,9 +269,12 @@ int main() {
 
     cout << endl;
     if (VERBOSITY >= 1) {
-        cout << "skipped " << skippedVectors << " vectors in the middle, avoiding "
-        << skippedBallsCalculations << " calls to calcTwoInsertions(), while executing " << executedBallsCalculations << " calls ("
-        << round((skippedBallsCalculations*100.0 / (skippedBallsCalculations + executedBallsCalculations))) << "% save)."  << endl;
+        cout << "Performance info:" << endl;
+        cout << "\t" << "avoided twoBallSize() calculation on " << skippedVectors << " vectors ("
+        << round(skippedVectors*100.0 / (1<<(VECTORS_LENGTH-1))) << "%)." << endl;
+        cout << "\tExecuted " << executedBallsCalculations
+        << " calls to calcTwoInsertions(), while skipping "  << skippedBallsCalculations << " calls ("
+        << round(skippedBallsCalculations*100.0 / (skippedBallsCalculations + executedBallsCalculations)) << "% save)."  << endl << endl;
     }
     // print the max ball size, and all it's vectors. Create the export file as well
     cout << "for n=" << VECTORS_LENGTH << " max indel-2 ball size is " << max_vector.ball_size

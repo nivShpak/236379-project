@@ -29,5 +29,6 @@ public:
     }
 };
 
+int getNumRuns(const string& s);
 
 #endif //UNTITLED2_VECTORS_H
