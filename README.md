@@ -18,8 +18,10 @@ The heart of the calculator is written in C++.
 Because some of the optimizations requiere to change the compiled code, we created a python script that will prepare the code according to the parameters given, and then will compile and run it.<br>
 The calculator is using multithreaded calculations to speed the performance, and the default number of threads is 57. The decision for this number will be explained in the optimizations part.
 
-In order to run the calculator, you just need to run the file 2-indel.py, as follows:
+In order to run the calculator, you just need to git-clone the repository run the file 2-indel.py, as follows:
 ```
+git clone https://github.com/nivShpak/Yaakombi.git
+cd Yaakombi
 2-indel.py -n <vector_length>
 ```
 
