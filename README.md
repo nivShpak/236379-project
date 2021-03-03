@@ -103,7 +103,7 @@ for (int i = thread_number; i < total_vectors; i += NUM_THREADS) {
 ``` 
 Because of this, if the number of threads is a power of 2, the last bits that each thread check will always be the same. And the work will not split equally. To solve this, we found out that 57 is greater that 32 (the number of cores available in cs servers to use), and will split the work much better. 
 
-5. For very n that we checked, the vectors generating the maximum 2-indel ball did not have runs longer than 2. We could not prove this, but we assume it is true for any n.<br>
+5. For every n that we checked, the vectors generating the maximum 2-indel ball did not have runs longer than 2. We could not prove this, but we assume it is true for any n.<br>
 Running the calculator with `-r 2` option will speed it significantly, as it will not do any work for the big majority of the vectors.<br>
 
 ## contact
