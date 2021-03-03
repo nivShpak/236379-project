@@ -6,6 +6,7 @@ At the end, it will print all the vectors that generate the maximum 2-indel ball
 To just run the calculator (supporting only unix):
 ```
 ./2-indel.py -n <vector_length>
+./2-indel.py -c <given_vector>
 ```
 The calculator will take O(2^n) time to run. For n=26 it could take more than an hour to finish.  
 
@@ -57,11 +58,10 @@ Histogram parameters - not recommended for big values of n:
 ```
 ./2-indel.py -c 0010010010011010101,00000,1010101
 ```
-will calculate the 2 insertions and 2 deletions ball radius of the provided vectors, printing:
-0010010010011010101 2-indel ball size is: 8084
-00000 2-indel ball size is: 16
-1010101 2-indel ball size is: 99
-
+will calculate the 2 insertions and 2 deletions ball radius of the provided vectors, printing:<br>
+0010010010011010101 2-indel ball size is: 8084<br>
+00000 2-indel ball size is: 16<br>
+1010101 2-indel ball size is: 99<br>
 ```
 ./2-indel.py -n 14 -v 1 -e 1 
 ```
