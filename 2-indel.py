@@ -45,6 +45,33 @@ def print_and_execute(command):
     os.system(command)
 
 
+def create_main_file(vector):
+    file_text = f'''
+#include <iostream>
+#include <cstring>
+#include "vectors.h"
+
+using std::cout;
+using std::endl;
+
+int main() {{
+    vectors v("{vector}");
+    cout << v.get_vector() << " 2-indel ball size is: " << v.twoBallSize() << endl; 
+    return 0;
+}}
+'''
+    return file_text
+
+
+def check_vector(vector, timestamp):
+    with open(f"main_{timestamp}.cpp", "w") as file:
+        file.write(create_main_file(vector))
+    os.system(f"g++ ./main_{timestamp}.cpp ./vectors.cpp -std=c++11 -pthread -O3 -o calculator_{timestamp}")
+    os.system(f"./calculator_{timestamp}")
+    os.system(f"rm ./calculator_{timestamp}")
+    os.system(f"rm ./main_{timestamp}.cpp")
+
+
 # parse argument to the calculator
 parser = argparse.ArgumentParser(description='', formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('-v', '--verbosity', default=0, help='how much logging to print. Could be 0,1,2,3. Defaults to 0')
@@ -55,9 +82,17 @@ parser.add_argument('-e', '--export_histogram', default=0, help='export histogra
 parser.add_argument('-p', '--print_histogram', default=0, help='print histogram')
 parser.add_argument('-b', '--bucket_size', default=20, help='histogram bucket size')
 parser.add_argument('-o', '--output', default=1, help='output max vectors to a file')
+parser.add_argument('-c', '--calculate', default=None, help='check the 2-indel ball size of the vectors provided (separated in commas)')
 args = parser.parse_args()
 
 cur_time = int(time.time())
+
+if (args.calculate):
+    for vector in args.calculate.split(","):
+        check_vector(vector, cur_time)
+    quit()
+
+
 lengths = args.n.split(',')
 for n in lengths:
     # create settings.h file

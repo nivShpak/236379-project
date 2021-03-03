@@ -60,10 +60,8 @@ string createStartVector(int vectorSize) {
             s.append("1");
     }
 
-    if (VECTORS_LENGTH > 6) {
-        for (; j < vectorSize - i; j += 6) {
-            s.append("011001");
-        }
+    for (; (j+6) < vectorSize - i; j += 6) {
+        s.append("011001");
     }
 
     for (; j < vectorSize; j++) {

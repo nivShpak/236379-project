@@ -24,6 +24,12 @@ git clone https://github.com/nivShpak/Yaakombi.git
 cd Yaakombi
 ./2-indel.py -n <vector_length>
 ```
+In order to check the 2-indel ball of a given cevtor:
+```
+git clone https://github.com/nivShpak/Yaakombi.git
+cd Yaakombi
+./2-indel.py -c <given_vector>
+```
 
 ### parameters
 We provide the following arguments that could be passed to the python script:
@@ -38,6 +44,7 @@ We provide the following arguments that could be passed to the python script:
 -t, --threads:   Number of threads to run. Defaults to 57, Avoid using powers of 2 to improve performance.
 -r, --max_run_length: Calculate only vectors with max run length <= of the number provided. 
                       We assume (but couldn't prove) that the max run length is at 2.
+-c, --calculate: check the 2-indel ball size of the vectors provided (separated in commas).
 
 Histogram parameters - not recommended for big values of n:
 -e, --export_histogram: flag to export the histogram to a file. Defaults to 0 (false). The histogram file name is 2indel_histogram_n<vector_length>.csv 
@@ -47,6 +54,14 @@ Histogram parameters - not recommended for big values of n:
 -o, --output: output max vectors to a file csv file. The file name is: max_vectors_n<vectors_size>
 ```
 ### examples
+```
+./2-indel.py -c 0010010010011010101,00000,1010101
+```
+will calculate the 2 insertions and 2 deletions ball radius of the provided vectors, printing:
+0010010010011010101 2-indel ball size is: 8084
+00000 2-indel ball size is: 16
+1010101 2-indel ball size is: 99
+
 ```
 ./2-indel.py -n 14 -v 1 -e 1 
 ```
