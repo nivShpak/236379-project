@@ -259,9 +259,11 @@ int main() {
 
     cout << endl;
     if (VERBOSITY >= 1) {
+        uint64_t total_vectors = 1;
+        total_vectors <<= (VECTORS_LENGTH-1);
         cout << "Performance info:" << endl;
         cout << "\t" << "avoided twoBallSize() calculation on " << skippedVectors << " vectors ("
-        << round(skippedVectors*100.0 / (1<<(VECTORS_LENGTH-1))) << "%)." << endl;
+        << round(skippedVectors*100.0 / total_vectors) << "%)." << endl;
         cout << "\tExecuted " << executedBallsCalculations
         << " calls to calcTwoInsertions(), while skipping "  << skippedBallsCalculations << " calls ("
         << round(skippedBallsCalculations*100.0 / (skippedBallsCalculations + executedBallsCalculations)) << "% save)."  << endl << endl;
