@@ -1,14 +1,16 @@
 # Binary 2-Indel Ball calculator
 This calculator is used to find the max 2-indel ball for binary vectors with length n.<br>
 The script will iterate over all the vectors of size n, and for each one will calculate it's 2-indel ball size.<br>
-At the end, it will print all the vectors that generate the maximum 2-indel ball.
-
+At the end, it will print all the vectors that generate the maximum 2-indel ball.<br>
 To just run the calculator (supporting only unix):
 ```
 ./2-indel.py -n <vector_length>
-./2-indel.py -c <given_vector>
 ```
-The calculator will take O(2^n) time to run. For n=26 it could take more than an hour to finish.  
+The calculator will take about O(2^n) time to run. For n=26 it could take more than an hour to finish.<br>
+To just check the 2-indel ball of a given binary vector (supporting all platforms):
+```
+./2-indel.py -c <vector>
+```
 
 ## Calculation Process
 the script will check for each vector of length n all the possible 2 deletions and 2 insertions, and will count how many vectors are generated at the process.<br>
@@ -25,7 +27,7 @@ git clone https://github.com/nivShpak/Yaakombi.git
 cd Yaakombi
 ./2-indel.py -n <vector_length>
 ```
-In order to check the 2-indel ball of a given cevtor:
+In order to check the 2-indel ball size of a given vector:
 ```
 git clone https://github.com/nivShpak/Yaakombi.git
 cd Yaakombi
