@@ -156,19 +156,15 @@ void *splitCheck(void *max_vector_p) {
     int64_t tmp_size = 0;
     struct max_vector *max_vector = ((struct max_vector *)max_vector_p);
     unordered_map<string, int> *vectors_sizes = max_vector->vectors_sizes;
-    for (int i = max_vector->mask; i < total_vectors; i += NUM_THREADS) {
+    for (uint64_t i = max_vector->mask; i < total_vectors; i += NUM_THREADS) {
         string s = bitset<VECTORS_LENGTH>(i).to_string();
 
         if (s[0] == '1') {
             // it's enough to check ony vectors starting with '0'
             break;
         }
-        if ((!IS_HISTOGRAM) && hasRunLongerThan(s, MAX_RUN_LENGTH)) {
-            skippedVectors++;
-            continue;
-        }
-
-        if (VERBOSITY >= 2 && VECTORS_LENGTH > 15) {
+        
+	if (VERBOSITY >= 2 && VECTORS_LENGTH > 15) {
             // 13 is a magic number so not too much is getting printed
             if ((i > 0) && (prints_counter % NUM_THREADS == max_vector->mask) && ((i/NUM_THREADS) % (1<<(VECTORS_LENGTH - 13))) == 0) {
                 prints_counter++;
@@ -176,6 +172,12 @@ void *splitCheck(void *max_vector_p) {
                      << i / NUM_THREADS << " of " << total_vectors / NUM_THREADS / 2 << " (" << round((i*200.0) / (total_vectors)) << "%)" << endl;
             }
         }
+        
+	if ((!IS_HISTOGRAM) && hasRunLongerThan(s, MAX_RUN_LENGTH)) {
+            skippedVectors++;
+            continue;
+        }
+
         vectors v(s);
         tmp_size = v.twoBallSize();
         vectors_calculated++;
