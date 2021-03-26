@@ -54,7 +54,7 @@ int longestRun(string s) {
 string createStartVector(int vectorSize) {
     string s = "";
     int j = 0;
-    int i = sqrt(vectorSize);
+    int i = round(sqrt(vectorSize));
     int k = 0;
     string prevString = "1";
     while (j < vectorSize) {
