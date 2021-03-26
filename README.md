@@ -11,6 +11,9 @@ To just check the 2-indel ball of a given binary vector (supporting all platform
 ```
 ./2-indel.py -c <vector>
 ```
+## known calculations
+We calculated already the vectors that generate the biggest ball for some values of n.<br>
+It can be seen here: https://docs.google.com/spreadsheets/d/1Qk8IHflr1HhHF1me1fSh7TvN3MemJuK2xdteBlAoEZU/edit?usp=sharing
 
 ## Calculation Process
 the script will check for each vector of length n all the possible 2 deletions and 2 insertions, and will count how many vectors are generated at the process.<br>
@@ -23,8 +26,8 @@ The calculator is using multithreaded calculations to speed the performance, and
 
 In order to run the calculator, you just need to git-clone the repository run the file 2-indel.py, as follows:
 ```
-git clone https://github.com/nivShpak/Yaakombi.git
-cd Yaakombi
+git clone https://github.com/nivShpak/236379-project.git
+cd 236379-project
 ./2-indel.py -n <vector_length>
 ```
 In order to check the 2-indel ball size of a given vector:
