@@ -25,7 +25,7 @@ int getNumRuns(const string& s) {
 static inline int deletionBallUpperBound(const string& s) {
     // get the number of runs
     int runs = getNumRuns(s);
-    return (runs * (runs - 1))/2;
+    return (runs * (runs - 1))/2 + runs;
 }
 
 int64_t vectors::twoBallSize() {

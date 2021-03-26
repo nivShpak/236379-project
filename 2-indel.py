@@ -32,7 +32,7 @@ def create_h_file(arguments, vector_length):
 #define PRINT_HISTOGRAM {arguments.print_histogram}
 #define HISTOGRAM_BUCKET_SIZE {arguments.bucket_size}
 #define OUTPUT_MAX_VECTORS {arguments.output}
-#define TWO_INSERTIONS_BALL_SIZE ((VECTORS_LENGTH)*(VECTORS_LENGTH + 1))/2
+#define TWO_INSERTIONS_BALL_SIZE (((VECTORS_LENGTH)*(VECTORS_LENGTH - 1))/2 + VECTORS_LENGTH + 1)
 #define IS_HISTOGRAM (PRINT_HISTOGRAM || EXPORT_HISTOGRAM)
 
 #endif //UNTITLED2_SETTINGS_H

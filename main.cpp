@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iterator>
+#include <math.h>
 
 #include "vectors.h"
 #include "settings.h"
@@ -47,28 +48,31 @@ int longestRun(string s) {
 }
 
 /*
- * We assume that the vector 010101 011001011001... 01010 will generate a large 2-indel ball.
+ * We assume that the vector containing alternating runs, that each run is of length
+ * of sqrt(n) will have a relatively large 2-indel ball size.
  */
 string createStartVector(int vectorSize) {
     string s = "";
     int j = 0;
-    int i = vectorSize / 5;
-    for (j = 0; j < i; j++) {
-        if (j % 2 == 0)
-            s.append("0");
-        else
-            s.append("1");
-    }
-
-    for (; (j+6) < vectorSize - i; j += 6) {
-        s.append("011001");
-    }
-
-    for (; j < vectorSize; j++) {
-        if (j%2 == 0)
-            s.append("0");
-        else
-            s.append("1");
+    int i = sqrt(vectorSize);
+    int k = 0;
+    string prevString = "1";
+    while (j < vectorSize) {
+        if (j > 0)
+            k = 1;
+        for (; k < i && j < vectorSize; k++, j++) {
+            if (prevString == "1") {
+                s.append("0");
+                prevString = "0";
+            } else {
+                s.append("1");
+                prevString = "1";
+            }
+        }
+        if (j < vectorSize) {
+            s.append(prevString);
+            j++;
+        }
     }
     return s;
 }
